@@ -16,6 +16,7 @@ class SummaryGeneratorConfig(BaseSettings):
     sessions_path: str
     default_summary_length: int
     load_from_string_session: None | str = None
+    ask_tag_string: str = "@ask"
 
 
 

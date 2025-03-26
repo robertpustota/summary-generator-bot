@@ -54,7 +54,8 @@ def _test_client():
 client = get_client()
 
 
-async def generate_summary_by_messages(chat_id: str, messages_limit: int, summary_length: int):
+async def generate_summary_by_messages(
+        chat_id: str, messages_limit: int, summary_length: int, additional_context: str = None):
     """
     Generates a summary of messages from a specified chat.
     This asynchronous function retrieves a specified number of messages from a chat,
@@ -88,5 +89,6 @@ async def generate_summary_by_messages(chat_id: str, messages_limit: int, summar
         collected_messages.append(f"{sender_name}: {stripped_text}")
 
     summary = summary_generator.invoke(chat_history=collected_messages, 
-                                        summary_length=summary_length)
+                                        summary_length=summary_length,
+                                        additional_info=additional_context)
     return summary

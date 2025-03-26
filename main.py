@@ -2,8 +2,10 @@ import asyncio
 from auto_summary_collector import AutoSummaryCollector
 from telethon import TelegramClient, events
 
+from loguru import logger
 from config import summary_generator_config as config
 from telethon_user_api_tools import generate_summary_by_messages, client
+from summary_generator import OneShotAsk
 
 
 bot_session_name = f"{config.sessions_path}/{config.bot_session_name}"
@@ -12,10 +14,11 @@ bot = TelegramClient(bot_session_name, config.telegram_api_id, config.telegram_a
 summary_collector = AutoSummaryCollector()
 
 
-@client.on(events.NewMessage(pattern=r'^/summary\s+(\d+)(?:\s+(\d+))?$'))
+@client.on(events.NewMessage(pattern=r'^/summary\s+(\d+)(?:\s+(\d+))?(?:\s+(.+))?$'))
 async def summary_handler(event):
     limit_str = event.pattern_match.group(1)
     summary_length_str = event.pattern_match.group(2)
+    additional_context = event.pattern_match.group(3) if event.pattern_match.group(3) else None
     # Check if length of summary passed correct
     try:
         summary_length = int(summary_length_str) if summary_length_str else config.default_summary_length
@@ -28,7 +31,7 @@ async def summary_handler(event):
         limit = 50
 
     chat_id = event.chat_id
-    summary = await generate_summary_by_messages(chat_id, limit, summary_length)
+    summary = await generate_summary_by_messages(chat_id, limit, summary_length, additional_context)
     # Reply to the user message
     await event.reply(message=summary)
 
@@ -50,6 +53,21 @@ async def set_auto_summary_handler(event):
     chat_id = event.chat_id
     summary_collector.start_collect_messages(chat_id=chat_id, messages_per_collect=number_of_messages)
     await event.reply(f"Auto-summarization enabled with a threshold of {number_of_messages} messages.")
+
+
+@client.on(events.NewMessage(pattern=rf"^{config.ask_tag_string}\s+(.+)$"))
+async def set_ask_tag_handler(event):
+    arg_data = str(event.pattern_match.group(1))  
+    if not event.reply_to:
+        result = OneShotAsk().invoke(query=arg_data, context=[])
+        await event.reply(result)
+        return
+    reply_to_message = await event.get_reply_message()
+    additional_context = []
+    if reply_to_message:
+        additional_context.append("User mention message content:\n{}".format(str(reply_to_message.message)))
+    result = OneShotAsk().invoke(query=arg_data, context=additional_context)
+    await event.reply(result)
 
 
 @client.on(events.NewMessage)
@@ -81,9 +99,12 @@ async def auto_summary_collector(event):
 
 async def main():
     await client.start()
-    print("Bot is working")
+    get = await client.get_me()
+    logger.info("Bot is working! [username={}]".format(get.username))
     await client.run_until_disconnected()
 
 
 if __name__ == "__main__":
+    from dotenv import load_dotenv
+    load_dotenv()
     asyncio.run(main())

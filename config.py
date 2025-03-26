@@ -14,5 +14,6 @@ class SummaryGeneratorConfig(BaseSettings):
     bot_session_name: str
     bot_token: str
     sessions_path: str
+    default_summary_length: int
 
 summary_generator_config = SummaryGeneratorConfig()

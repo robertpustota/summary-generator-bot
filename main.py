@@ -16,6 +16,7 @@ summary_collector = AutoSummaryCollector()
 async def summary_handler(event):
     limit_str = event.pattern_match.group(1)
     summary_length_str = event.pattern_match.group(2)
+    additional_context = event.pattern_match.group(3)
     chat_id = event.chat_id
     # Check if length of summary passed correct
     try:
@@ -47,7 +48,7 @@ async def summary_handler(event):
                      f"It has been adjusted to {config.max_messages_to_gather}."
         )
 
-    summary = await generate_summary_by_messages(chat_id, limit, summary_length)
+    summary = await generate_summary_by_messages(chat_id, limit, summary_length, additional_context)
     # Reply to the user message
     await event.reply(message=summary)
 

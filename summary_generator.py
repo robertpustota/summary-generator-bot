@@ -15,7 +15,7 @@ class SummaryGenerationSignature(dspy.Signature):
         desc="Generated summary based on the input list of messages."
     )
     additional_info: str | None = dspy.InputField(
-        desc="Additional information that is not part of the summary, but is relevant to the conversation."
+        desc="Additional information that contain special instructions how to generate summary, but is not part of conversation."
     )
 
 
@@ -55,7 +55,8 @@ class OneShotAskSignature(dspy.Signature):
     answer: str = dspy.OutputField(
         desc="The answer to the query."
     )
-    
+
+
 class OneShotAsk(dspy.Module):
     """
     A module for answering questions based on a given context using a specified language model.

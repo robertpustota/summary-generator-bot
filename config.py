@@ -15,6 +15,8 @@ class SummaryGeneratorConfig(BaseSettings):
     bot_token: str
     sessions_path: str
     default_summary_length: int
+    max_summary_length: int = 1000
+    max_messages_to_gather: int = 1000
     load_from_string_session: None | str = None
     ask_tag_string: str = "@ask"
 

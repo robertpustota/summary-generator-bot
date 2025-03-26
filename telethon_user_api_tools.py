@@ -1,14 +1,57 @@
+import asyncio
+import os
+import pathlib
+from loguru import logger
 from telethon import TelegramClient
 
 from summary_generator import SummaryGenerator
 from config import summary_generator_config as config
+from telethon.sessions import StringSession
+from tg_converter import TelegramSession
+
 
 summary_generator = SummaryGenerator(
     llm_model='openai/gpt-4o-mini',
     llm_model_kwargs={"api_key": config.openai_api_key})
 
-session_name = f"{config.sessions_path}/{config.telethon_session_name}"
-client = TelegramClient(session_name, config.telegram_api_id, config.telegram_api_hash)
+
+
+def get_client():
+    session_name = f"{config.sessions_path}/{config.telethon_session_name}"
+    logger.info("Check for session file")
+    if not pathlib.Path(f"{session_name}.session").exists():
+        logger.info("Session file not found! Loading from string session")
+        if config.load_from_string_session is not None:
+            string_client = TelegramClient(
+                StringSession(config.load_from_string_session), config.telegram_api_id, config.telegram_api_hash)
+            converter_session = TelegramSession.from_telethon_or_pyrogram_client(string_client)
+            session_workdir = str(config.sessions_path)
+            if session_workdir[-1] == "/":
+                session_workdir = session_workdir[:-1]
+            converter_session.make_sqlite_session_file(
+                config.telethon_session_name, workdir=session_workdir,
+                api_id=config.telegram_api_id, api_hash=config.telegram_api_hash)
+            logger.info(f"Session {session_name} created")
+        else:
+            raise ValueError(f"Session {session_name} not found")
+    else:
+        logger.info(f"Session {session_name} found")
+
+    return TelegramClient(session_name, config.telegram_api_id, config.telegram_api_hash)
+
+
+def _test_client():
+    # TODO: remove this function
+    async def _test_client_inner():
+        client = get_client()
+        await client.start()
+        logger.info(await client.get_me())
+
+    return asyncio.run(_test_client_inner())
+
+
+# Retrieve client
+client = get_client()
 
 
 async def generate_summary_by_messages(chat_id: str, messages_limit: int, summary_length: int):

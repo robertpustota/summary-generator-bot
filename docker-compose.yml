@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   summary-generator:
     build:
@@ -15,6 +13,7 @@ services:
       SESSIONS_PATH: ${SESSIONS_PATH}
       TELETHON_SESSION_NAME: ${TELETHON_SESSION_NAME}
       BOT_SESSION_NAME: ${BOT_SESSION_NAME}
+      DEFAULT_SUMMARY_LENGTH: ${DEFAULT_SUMMARY_LENGTH}
     volumes:
       - ./sessions:/app/sessions
     command: python main.py

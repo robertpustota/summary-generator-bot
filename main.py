@@ -18,9 +18,9 @@ async def summary_handler(event):
     summary_length_str = event.pattern_match.group(2)
     # Check if length of summary passed correct
     try:
-        summary_length = int(summary_length_str) if summary_length_str else 250
+        summary_length = int(summary_length_str) if summary_length_str else config.default_summary_length
     except ValueError:
-        summary_length = 250
+        summary_length = config.default_summary_length
     # Check if number of messages passed correct
     try:
         limit = int(limit_str)
@@ -46,9 +46,9 @@ async def set_auto_summary_handler(event):
     try:
         number_of_messages = int(number_of_messages_str)
     except ValueError:
-        number_of_messages = 500
+        number_of_messages = 100
     chat_id = event.chat_id
-    summary_collector.start_collect_messages(chat_id, number_of_messages)
+    summary_collector.start_collect_messages(chat_id=chat_id, messages_per_collect=number_of_messages)
     await event.reply(f"Auto-summarization enabled with a threshold of {number_of_messages} messages.")
 
 
@@ -63,10 +63,6 @@ async def auto_summary_collector(event):
     if chat.collect_auto_summary is False:
         return
     
-    # Check if collector is ready to generate summary
-    if summary_collector.is_full(chat_id):
-        summary = summary_collector.generate_summary(chat_id)
-        await event.reply(summary)
     # Collect new message
     text = event.raw_text or "<no text>"
     stripped_text = text.strip()
@@ -75,6 +71,12 @@ async def auto_summary_collector(event):
     sender = await event.message.get_sender()
     sender_name = sender.username if sender.username else str(sender.id)
     summary_collector.add_new_message(chat_id, stripped_text, sender_name)
+
+    # Check if collector is ready to generate summary
+    if summary_collector.is_full(chat_id):
+        summary = summary_collector.generate_summary(chat_id)
+        message = f"Summarization of last {chat.messages_per_collect} messages:\n\n{summary}"
+        await bot.send_message(chat_id, message=message)
 
 
 async def main():

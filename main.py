@@ -3,7 +3,7 @@ from auto_summary_collector import AutoSummaryCollector
 from telethon import TelegramClient, events
 
 from config import summary_generator_config as config
-from telethon_user_api_tools import generate_summary_by_messages
+from telethon_user_api_tools import generate_summary_by_messages, client
 
 
 bot_session_name = f"{config.sessions_path}/{config.bot_session_name}"
@@ -12,7 +12,7 @@ bot = TelegramClient(bot_session_name, config.telegram_api_id, config.telegram_a
 summary_collector = AutoSummaryCollector()
 
 
-@bot.on(events.NewMessage(pattern=r'^/summary\s+(\d+)(?:\s+(\d+))?$'))
+@client.on(events.NewMessage(pattern=r'^/summary\s+(\d+)(?:\s+(\d+))?$'))
 async def summary_handler(event):
     limit_str = event.pattern_match.group(1)
     summary_length_str = event.pattern_match.group(2)
@@ -33,14 +33,14 @@ async def summary_handler(event):
     await event.reply(message=summary)
 
 
-@bot.on(events.NewMessage(pattern=r'^/stopautosummary$'))
+@client.on(events.NewMessage(pattern=r'^/stopautosummary$'))
 async def stop_auto_summary_handler(event):
     chat_id = event.chat_id
     summary_collector.stop_collect_messages(chat_id)
     await event.reply("Auto-summarization disabled")
 
 
-@bot.on(events.NewMessage(pattern=r'^/setautosummary\s+(\d+)$'))
+@client.on(events.NewMessage(pattern=r'^/setautosummary\s+(\d+)$'))
 async def set_auto_summary_handler(event):
     number_of_messages_str = event.pattern_match.group(1)
     try:
@@ -52,7 +52,7 @@ async def set_auto_summary_handler(event):
     await event.reply(f"Auto-summarization enabled with a threshold of {number_of_messages} messages.")
 
 
-@bot.on(events.NewMessage)
+@client.on(events.NewMessage)
 async def auto_summary_collector(event):
     chat_id = event.chat_id
     # Check if chat exist and if auto collector is enabled
@@ -80,9 +80,9 @@ async def auto_summary_collector(event):
 
 
 async def main():
-    await bot.start(bot_token=config.bot_token)
+    await client.start()
     print("Bot is working")
-    await bot.run_until_disconnected()
+    await client.run_until_disconnected()
 
 
 if __name__ == "__main__":

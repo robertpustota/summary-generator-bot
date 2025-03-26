@@ -80,7 +80,10 @@ async def generate_summary_by_messages(chat_id: str, messages_limit: int, summar
     collected_messages = []
     for msg in reversed(messages):
         sender = await msg.get_sender()
-        sender_name = sender.username if sender.username else str(sender.id)
+        if not sender:
+            sender_name = "unknown-user"
+        else:
+            sender_name = sender.username if sender.username else str(sender.id)
         text = msg.message or "<no text>"
         stripped_text = text.strip()
         if stripped_text.startswith('/summary') or stripped_text == "<no text>" or not stripped_text:

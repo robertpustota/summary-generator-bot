@@ -77,10 +77,15 @@ async def generate_summary_by_messages(
     await client.start()
 
     messages = await client.get_messages(chat_id, limit=messages_limit)
+    client_object = await client.get_me()
+    client_id = client_object.id
+    
     # Collecting messages
     collected_messages = []
     for msg in reversed(messages):
         sender = await msg.get_sender()
+        if sender.id == client_id:
+            continue
         if not sender:
             sender_name = "unknown-user"
         else:

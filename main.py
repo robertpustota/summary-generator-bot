@@ -109,12 +109,17 @@ async def auto_summary_collector(event):
         return
     
     # Collect new message
-    text = event.raw_text or "<no text>"
-    stripped_text = text.strip()
-    if stripped_text.startswith('/') or stripped_text == "<no text>" or not stripped_text:
-        return
     sender = await event.message.get_sender()
     sender_name = sender.username if sender.username else str(sender.id)
+    # skip messages from self
+    client_object = await client.get_me()
+    if sender.id == client_object.id:
+        return
+    text = event.raw_text or "<no text>"
+    stripped_text = text.strip()
+    # skip messages with commands or empty messages
+    if stripped_text.startswith('/') or stripped_text == "<no text>" or not stripped_text:
+        return
     summary_collector.add_new_message(chat_id, stripped_text, sender_name)
 
     # Check if collector is ready to generate summary
